@@ -75459,10 +75459,11 @@ function readWorkspaceManifest(workspace2) {
     if (typeof parsed !== "object" || parsed === null) {
       return {};
     }
-    const { name, version } = parsed;
+    const { name, version, private: isPrivate } = parsed;
     return {
       ...typeof name === "string" ? { name } : {},
-      ...typeof version === "string" ? { version } : {}
+      ...typeof version === "string" ? { version } : {},
+      ...typeof isPrivate === "boolean" ? { private: isPrivate } : {}
     };
   } catch {
     return {};
@@ -75479,8 +75480,15 @@ function parseInputs(getInput2, context4) {
     throw new ToolError(`Input "stage" must be a stage id (UUID), got "${stageInput}"`);
   }
   const manifest = readWorkspaceManifest(context4.workspace);
-  const name = getInput2("package").trim() || manifest.name;
-  const version = getInput2("version").trim() || manifest.version;
+  const packageInput = getInput2("package").trim();
+  const versionInput = getInput2("version").trim();
+  if (manifest.private && (!packageInput || !versionInput) && (!stageInput || packageInput || versionInput)) {
+    throw new ToolError(
+      'The root package.json is private (a monorepo?); set the "package" and "version" inputs to the package you publish'
+    );
+  }
+  const name = packageInput || (manifest.private ? void 0 : manifest.name);
+  const version = versionInput || (manifest.private ? void 0 : manifest.version);
   let spec;
   if (name && version) {
     const parsed = parseSpec(`${name}@${version}`);

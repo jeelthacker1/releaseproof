@@ -150,7 +150,9 @@ describe("parseInputs with a stage id", () => {
     expect(parseInputs(inputs({ stage, package: "published", version: "2.0.0" }), ctx).spec).toBe(
       "published@2.0.0",
     );
-    expect(() => parseInputs(inputs({ stage, package: "published" }), ctx)).toThrow(/root package.json is private/);
+    expect(() => parseInputs(inputs({ stage, package: "published" }), ctx)).toThrow(
+      /root package.json is private/,
+    );
   });
 
   it("rejects a malformed stage id", () => {
