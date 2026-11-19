@@ -46,6 +46,30 @@ describe("parseInputs", () => {
     });
   });
 
+  it.each([{}, { package: "published" }, { version: "2.0.0" }] as Record<string, string>[])(
+    "requires both explicit inputs with a private root: %j",
+    (values) => {
+      const workspace = workspaceWith({ name: "root", version: "1.0.0", private: true });
+      expect(() => parseInputs(inputs(values), context({ workspace }))).toThrow(
+        new ToolError(
+          'The root package.json is private (a monorepo?); set the "package" and "version" inputs to the package you publish',
+        ),
+      );
+    },
+  );
+
+  it("honors explicit inputs with a private root", () => {
+    const workspace = workspaceWith({ name: "root", version: "1.0.0", private: true });
+    expect(
+      parseInputs(inputs({ package: "published", version: "2.0.0" }), context({ workspace })).spec,
+    ).toBe("published@2.0.0");
+  });
+
+  it("continues defaulting from a non-private root", () => {
+    const workspace = workspaceWith({ name: "published", version: "2.0.0", private: false });
+    expect(parseInputs(inputs({}), context({ workspace })).spec).toBe("published@2.0.0");
+  });
+
   it("prefers explicit inputs and validates them with the CLI's rules", () => {
     const parsed = parseInputs(
       inputs({
@@ -116,6 +140,17 @@ describe("parseInputs with a stage id", () => {
       context({ workspace: empty }),
     );
     expect(noSpec.spec).toBeUndefined();
+  });
+
+  it("does not use a private root as a stage cross-check", () => {
+    const workspace = workspaceWith({ name: "root", version: "1.0.0", private: true });
+    const stage = "123e4567-e89b-12d3-a456-426614174000";
+    const ctx = context({ workspace });
+    expect(parseInputs(inputs({ stage }), ctx).spec).toBeUndefined();
+    expect(parseInputs(inputs({ stage, package: "published", version: "2.0.0" }), ctx).spec).toBe(
+      "published@2.0.0",
+    );
+    expect(() => parseInputs(inputs({ stage, package: "published" }), ctx)).toThrow(/root package.json is private/);
   });
 
   it("rejects a malformed stage id", () => {

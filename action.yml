@@ -7,10 +7,10 @@ branding:
 
 inputs:
   package:
-    description: Package name. Defaults to "name" in the checkout's package.json.
+    description: Package name. Defaults to "name" in a non-private root package.json. For a private root, provide both package and version explicitly (unless checking only a stage id).
     required: false
   version:
-    description: Exact version to check. Defaults to "version" in the checkout's package.json.
+    description: Exact version to check. Defaults to "version" in a non-private root package.json.
     required: false
   stage:
     description: Stage id of a staged, not yet approved version to check instead of a published one. Needs a registry token in NPM_TOKEN or NODE_AUTH_TOKEN.

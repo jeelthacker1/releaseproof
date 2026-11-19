@@ -11,7 +11,7 @@ import {
 export type FailOn = "non-zero" | "differs" | "never";
 
 export interface ActionInputs {
-  /** Undefined only when a stage id is given and the checkout has no package.json. */
+  /** Undefined when a stage id is given without a usable package spec. */
   spec: string | undefined;
   stageId: string | undefined;
   repository: string | undefined;
@@ -49,16 +49,21 @@ const GITHUB_REPOSITORY_RE =
  */
 export const FORBIDDEN_EVENTS = new Set(["pull_request_target"]);
 
-function readWorkspaceManifest(workspace: string): { name?: string; version?: string } {
+function readWorkspaceManifest(workspace: string): {
+  name?: string;
+  version?: string;
+  private?: boolean;
+} {
   try {
     const parsed: unknown = JSON.parse(readFileSync(path.join(workspace, "package.json"), "utf8"));
     if (typeof parsed !== "object" || parsed === null) {
       return {};
     }
-    const { name, version } = parsed as Record<string, unknown>;
+    const { name, version, private: isPrivate } = parsed as Record<string, unknown>;
     return {
       ...(typeof name === "string" ? { name } : {}),
       ...(typeof version === "string" ? { version } : {}),
+      ...(typeof isPrivate === "boolean" ? { private: isPrivate } : {}),
     };
   } catch {
     return {};
@@ -77,8 +82,20 @@ export function parseInputs(getInput: GetInput, context: ActionContext): ActionI
     throw new ToolError(`Input "stage" must be a stage id (UUID), got "${stageInput}"`);
   }
   const manifest = readWorkspaceManifest(context.workspace);
-  const name = getInput("package").trim() || manifest.name;
-  const version = getInput("version").trim() || manifest.version;
+  const packageInput = getInput("package").trim();
+  const versionInput = getInput("version").trim();
+  if (
+    manifest.private &&
+    (!packageInput || !versionInput) &&
+    (!stageInput || packageInput || versionInput)
+  ) {
+    throw new ToolError(
+      'The root package.json is private (a monorepo?); set the "package" and "version" inputs to the package you publish',
+    );
+  }
+  // A stage-only check does not need a spec. Never use a private root as its cross-check.
+  const name = packageInput || (manifest.private ? undefined : manifest.name);
+  const version = versionInput || (manifest.private ? undefined : manifest.version);
   let spec: string | undefined;
   if (name && version) {
     const parsed = parseSpec(`${name}@${version}`);
