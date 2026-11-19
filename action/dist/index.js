@@ -74196,6 +74196,9 @@ function isCodePath(path13) {
   const extension2 = path13.split(".").pop()?.toLowerCase() ?? "";
   return CODE_EXTENSIONS.has(extension2);
 }
+function isCodeFile(path13, content) {
+  return isCodePath(path13) || content[0] === 35 && content[1] === 33;
+}
 function count2(text, pattern) {
   return text.match(pattern)?.length ?? 0;
 }
@@ -74442,12 +74445,12 @@ function fileRules(context4) {
   const suspects = [
     ...diff.onlyInRelease.map((entry) => entry.path),
     ...contentChanges.map((change) => change.path)
-  ].filter((path13) => isCodePath(path13));
+  ];
   const obfuscated = [];
   const minified = [];
   for (const path13 of suspects) {
     const entry = release.entries.get(path13);
-    if (!entry?.content) {
+    if (!entry?.content || !isCodeFile(path13, entry.content)) {
       continue;
     }
     const signals2 = analyzeCode(entry.content.toString("utf8"));
