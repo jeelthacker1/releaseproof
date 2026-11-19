@@ -43,13 +43,16 @@ describe("parseSpec", () => {
     },
   );
 
-  it.each(["express", "@scope/pkg", "JSONStream"])("explains how to give a version for %j", (name) => {
-    expect(() => parseSpec(name)).toThrow(
-      new ToolError(
-        `Give an exact version: ${name}@<version>, for example ${name}@1.2.3 (npm view ${name} version prints the latest)`,
-      ),
-    );
-  });
+  it.each(["express", "@scope/pkg", "JSONStream"])(
+    "explains how to give a version for %j",
+    (name) => {
+      expect(() => parseSpec(name)).toThrow(
+        new ToolError(
+          `Give an exact version: ${name}@<version>, for example ${name}@1.2.3 (npm view ${name} version prints the latest)`,
+        ),
+      );
+    },
+  );
 
   it.each([
     ["bad name@1.0.0", 'Invalid package name "bad name"'],

@@ -64375,7 +64375,7 @@ function resolveToken(registry, options = {}) {
 }
 
 // ../packages/core/src/registry/spec.ts
-var NAME_RE = /^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
+var NAME_RE = /^(@[A-Za-z0-9-~][A-Za-z0-9-._~]*\/)?[A-Za-z0-9-~][A-Za-z0-9-._~]*$/;
 var VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 function parseSpec(input) {
   const at2 = input.lastIndexOf("@");
