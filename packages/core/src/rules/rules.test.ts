@@ -362,6 +362,38 @@ describe("file rules on crafted tarballs", () => {
     ]);
   });
 
+  const suspiciousText = "const _0xaaaa = 1, _0xbbbb = 2, _0xcccc = 3, _0xdddd = 4, _0xeeee = 5;\n";
+  const suspiciousScript = `#!/usr/bin/env node\n${suspiciousText}`;
+
+  it("flags added extensionless scripts with obfuscation signals but not ordinary text", () => {
+    const release = clean([
+      { path: "package.json", content: "{}" },
+      { path: "bin/cli", content: suspiciousScript, mode: 0o755 },
+      { path: "LICENSE", content: suspiciousText },
+    ]);
+    const rebuild = clean([{ path: "package.json", content: "{}" }]);
+    const findings = runRules(ruleContext(release, rebuild));
+    expect(ids(findings)).toEqual(["critical:obfuscated-code-added", "high:file-added"]);
+    expect(findings[0]?.paths).toEqual(["bin/cli"]);
+    expect(findings[0]?.detail).toContain("hex-named identifiers");
+  });
+
+  it("flags changed extensionless scripts, but not matching scripts", () => {
+    const release = clean([
+      { path: "package.json", content: "{}" },
+      { path: "bin/cli", content: suspiciousScript, mode: 0o755 },
+    ]);
+    const rebuild = clean([
+      { path: "package.json", content: "{}" },
+      { path: "bin/cli", content: "#!/usr/bin/env node\nconsole.log(1);\n", mode: 0o755 },
+    ]);
+
+    const findings = runRules(ruleContext(release, rebuild));
+    expect(ids(findings)).toEqual(["critical:obfuscated-code-added", "high:file-changed"]);
+    expect(findings[0]?.paths).toEqual(["bin/cli"]);
+    expect(runRules(ruleContext(release, release))).toEqual([]);
+  });
+
   it("does not call images binaries, and ignores minified code the source also produces", () => {
     const minified = `${"var a=1;".repeat(400)}\n`;
     const release = clean([

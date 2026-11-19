@@ -25,6 +25,11 @@ export function isCodePath(path: string): boolean {
   return CODE_EXTENSIONS.has(extension);
 }
 
+/** Recognize interpreter scripts by their leading shebang, regardless of extension. */
+export function isCodeFile(path: string, content: Uint8Array): boolean {
+  return isCodePath(path) || (content[0] === 0x23 && content[1] === 0x21);
+}
+
 function count(text: string, pattern: RegExp): number {
   return text.match(pattern)?.length ?? 0;
 }

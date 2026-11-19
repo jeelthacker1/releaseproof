@@ -1,6 +1,6 @@
 import type { FileChange, PathEntry } from "../diff/compare.js";
 import type { TarballContents, TarEntry } from "../diff/tarball.js";
-import { analyzeCode, isCodePath } from "./code.js";
+import { analyzeCode, isCodeFile } from "./code.js";
 import type { Finding, RuleContext } from "./types.js";
 
 const UNEXPECTED_PATHS: Array<{ pattern: RegExp; why: string }> = [
@@ -254,12 +254,12 @@ export function fileRules(context: RuleContext): Finding[] {
   const suspects = [
     ...diff.onlyInRelease.map((entry) => entry.path),
     ...contentChanges.map((change) => change.path),
-  ].filter((path) => isCodePath(path));
+  ];
   const obfuscated: Array<{ path: string; reasons: string[] }> = [];
   const minified: Array<{ path: string; reasons: string[] }> = [];
   for (const path of suspects) {
     const entry = release.entries.get(path);
-    if (!entry?.content) {
+    if (!entry?.content || !isCodeFile(path, entry.content)) {
       continue;
     }
     const signals = analyzeCode(entry.content.toString("utf8"));

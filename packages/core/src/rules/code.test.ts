@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { fixtureDir } from "../../test/tarballs.js";
-import { analyzeCode, isCodePath } from "./code.js";
+import { analyzeCode, isCodeFile, isCodePath } from "./code.js";
 
 describe("analyzeCode", () => {
   it("sees nothing special in ordinary code", () => {
@@ -53,5 +53,20 @@ describe("isCodePath", () => {
     expect(isCodePath("scripts/setup.sh")).toBe(true);
     expect(isCodePath("README.md")).toBe(false);
     expect(isCodePath("package.json")).toBe(false);
+  });
+});
+
+describe("isCodeFile", () => {
+  it("recognises shebang scripts regardless of extension", () => {
+    expect(isCodeFile("bin/cli", Buffer.from("#!/usr/bin/env node\n"))).toBe(true);
+    expect(isCodeFile("bin/tool.txt", Buffer.from("#!/bin/sh\n"))).toBe(true);
+    expect(isCodeFile("lib/index.js", Buffer.from("const x = 1;"))).toBe(true);
+  });
+
+  it("does not treat ordinary text or a partial or later shebang as code", () => {
+    expect(isCodeFile("LICENSE", Buffer.from("ordinary text"))).toBe(false);
+    expect(isCodeFile("bin/cli", Buffer.from("text\n#!/bin/sh\n"))).toBe(false);
+    expect(isCodeFile("bin/cli", Buffer.from("#"))).toBe(false);
+    expect(isCodeFile("bin/cli", Buffer.alloc(0))).toBe(false);
   });
 });

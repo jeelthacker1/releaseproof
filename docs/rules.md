@@ -77,7 +77,7 @@ Compared field by field against the rebuilt package.json; key order never counts
 | --- | --- | --- |
 | `tarball-problem` | critical | The release tarball contains links, absolute paths, `..`, duplicates, unsupported entry types or mixed top-level directories, or reading stopped at a limit (20 000 entries or 512 MiB unpacked by default). |
 | `native-code-added` | critical | `.node`, `binding.gyp`, `.so`, `.dll`, `.dylib`, `.exe`, `.a` or `.lib` files the rebuild did not produce byte-for-byte. |
-| `obfuscated-code-added` | critical | Code the source does not produce that shows obfuscation signals: hex-named identifiers (`_0x…`), many hex/unicode escapes, dynamic evaluation plus encoded payloads. |
+| `obfuscated-code-added` | critical | Code (including scripts starting with `#!`) the source does not produce that shows obfuscation signals: hex-named identifiers (`_0x…`), many hex/unicode escapes, dynamic evaluation plus encoded payloads. |
 | `file-type-changed` | critical | A file in the source is a link or directory in the release, or vice versa. |
 | `file-added` | high | Files in the release that a clean build does not produce. |
 | `file-changed` | high | Files whose content differs; a unified diff is attached for text files up to 1 MB. |
