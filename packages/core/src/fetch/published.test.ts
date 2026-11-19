@@ -91,6 +91,32 @@ describe("fetchPublished", () => {
     }
   });
 
+  it("fetches a legacy package using its published case", async () => {
+    const manifest = manifestFor({
+      name: "JSONStream",
+      version: "1.3.5",
+      dist: {
+        integrity: `sha512-${digests.sha512Base64}`,
+        tarball: `${REGISTRY}JSONStream/-/JSONStream-1.3.5.tgz`,
+      },
+    });
+    const { fetch, calls } = registryFetch({
+      [`${REGISTRY}JSONStream/1.3.5`]: json(manifest),
+      [`${REGISTRY}JSONStream/-/JSONStream-1.3.5.tgz`]: bytes(tarball),
+    });
+    const artifact = await fetchPublished("JSONStream@1.3.5", {
+      fetch,
+      env: {},
+      npmrcPaths: [],
+    });
+    expect(artifact.name).toBe("JSONStream");
+    expect(artifact.purl).toBe("pkg:npm/JSONStream@1.3.5");
+    expect(calls.map((call) => call.url)).toEqual([
+      `${REGISTRY}JSONStream/1.3.5`,
+      `${REGISTRY}JSONStream/-/JSONStream-1.3.5.tgz`,
+    ]);
+  });
+
   it("encodes the slash of scoped names in the version path", async () => {
     const manifest = { ...manifestFor(), name: "@sigstore/verify", version: "4.1.2" };
     const { fetch, calls } = registryFetch({

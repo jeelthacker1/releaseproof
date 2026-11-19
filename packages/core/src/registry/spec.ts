@@ -7,8 +7,9 @@ export interface PackageSpec {
   purl: string;
 }
 
-// npm name rules: lowercase, URL-safe, optional @scope/, max 214 chars.
-const NAME_RE = /^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
+// Accept uppercase for legacy npm packages published before the lowercase-only rule.
+// Keep the published casing, URL-safe characters, optional scope and max 214 chars.
+const NAME_RE = /^(@[A-Za-z0-9-~][A-Za-z0-9-._~]*\/)?[A-Za-z0-9-~][A-Za-z0-9-._~]*$/;
 // An exact semver version. Ranges and tags are rejected on purpose: a verdict must be about
 // one immutable tarball.
 const VERSION_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;

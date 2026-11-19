@@ -19,6 +19,19 @@ describe("parseSpec", () => {
     });
   });
 
+  it("preserves the case of legacy unscoped and scoped package names", () => {
+    expect(parseSpec("JSONStream@1.3.5")).toEqual({
+      name: "JSONStream",
+      version: "1.3.5",
+      purl: "pkg:npm/JSONStream@1.3.5",
+    });
+    expect(parseSpec("@Legacy/Package@1.0.0")).toEqual({
+      name: "@Legacy/Package",
+      version: "1.0.0",
+      purl: "pkg:npm/%40Legacy/Package@1.0.0",
+    });
+  });
+
   it("accepts prerelease and build metadata", () => {
     expect(parseSpec("pkg@1.0.0-beta.1+build.5").version).toBe("1.0.0-beta.1+build.5");
   });
@@ -30,7 +43,7 @@ describe("parseSpec", () => {
     },
   );
 
-  it.each(["express", "@scope/pkg"])("explains how to give a version for %j", (name) => {
+  it.each(["express", "@scope/pkg", "JSONStream"])("explains how to give a version for %j", (name) => {
     expect(() => parseSpec(name)).toThrow(
       new ToolError(
         `Give an exact version: ${name}@<version>, for example ${name}@1.2.3 (npm view ${name} version prints the latest)`,
@@ -54,12 +67,21 @@ describe("parseSpec", () => {
     },
   );
 
-  it.each(["Sigstore@1.0.0", ".hidden@1.0.0", "bad name@1.0.0", "@scope@1.0.0", "a/b@1.0.0"])(
-    "rejects invalid package name in %j",
-    (input) => {
-      expect(() => parseSpec(input)).toThrow(/Invalid package name/);
-    },
-  );
+  it.each([
+    ".hidden@1.0.0",
+    "_Hidden@1.0.0",
+    "..@1.0.0",
+    "bad name@1.0.0",
+    "@scope@1.0.0",
+    "a/b@1.0.0",
+    "@.Scope/Package@1.0.0",
+    "@Scope/.Package@1.0.0",
+    "@Scope/_Package@1.0.0",
+    "Bad%2FName@1.0.0",
+    `${"A".repeat(215)}@1.0.0`,
+  ])("rejects invalid package name in %j", (input) => {
+    expect(() => parseSpec(input)).toThrow(/Invalid package name/);
+  });
 });
 
 describe("toPurl", () => {
